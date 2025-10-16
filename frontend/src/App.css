@@ -1,0 +1,15 @@
+/* Aquí van estilos generales de la app, botones, headers, etc. */
+.container {
+  padding: 20px;
+}
+
+.app-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+main {
+  flex: 1;
+  padding: 20px;
+}

@@ -1,0 +1,125 @@
+.detalle-orden-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.detalle-orden-content {
+  display: flex;
+  flex: 1;
+  min-height: 100vh;
+  
+}
+
+.detalle-orden-main {
+  flex: 1;
+  margin-left: 250px;
+  padding: 30px;
+  background-color: #E7E5E5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.detalle-orden-title {
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 32px;
+  font-weight: 600;
+}
+
+.detalle-orden-card {
+  width: 90%;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 0 4px rgba(0,0,0,0.1);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.detalle-orden-card.datos-generales {
+  display: flex;
+  justify-content: space-between;
+  width: 90%;
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: 0 0 4px rgba(0,0,0,0.1);
+  padding: 12px 16px;
+  margin-bottom: 20px;
+}
+
+.detalle-orden-card.datos-generales .columna {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.detalle-orden-card.datos-generales .columna:first-child {
+  margin-right: 20px;
+}
+
+.detalle-orden-card.datos-generales p {
+  margin: 0;
+  font-size: 15px;
+}
+.estado-orden.PENDIENTE {  
+  color: #7f7f7f;
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+
+.estado-orden.EN-CURSO {  
+  color: #ffc107;
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+
+.estado-orden.FINALIZADO {  
+  color: #4caf50;
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+
+.detalle-orden-botones {
+  display: flex;
+  justify-content: flex-end; 
+  gap: 15px; 
+  width: 50%; 
+  margin-left: auto; 
+  margin-top: 20px; 
+  margin-right: 60px;
+}
+
+/* Botón Enviar a Facturar */
+.detalle-orden-btn-enviar {
+  background-color: #4CAF50;
+  color: #fff;
+  border: none;
+  padding: 10px 22px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.detalle-orden-btn-enviar:hover {
+  background-color: #1a252f;
+}
+
+/* Botón Volver */
+.detalle-orden-btn-volver {
+  background-color: #7f7f7f;
+  color: #fff;
+  border: none;
+  padding: 10px 22px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  min-width: 120px;
+  transition: background-color 0.2s ease;
+}
+
+.detalle-orden-btn-volver:hover {
+  background-color: #5e5e5e;
+}
