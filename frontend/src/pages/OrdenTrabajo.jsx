@@ -1,62 +1,129 @@
-import React, { useState} from "react";
+import React, { useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Sidebar from "../components/Sidebar";
 import { useNavigate, useLocation } from "react-router-dom";
-
-import "./OrdenTrabajo.css";
+import { formatDateForSummary } from "../utils/dateUtils";
+import { createOrden } from "../services/ordenesService";
+import "../styles/OrdenTrabajo.css";
 
 function OrdenTrabajo() {
   const location = useLocation();
   const navigate = useNavigate();
 
+  // Recibimos el turno desde TurnosView
   
-  // Datos simulados (actualizar con backend)
-  const turno = location.state?.turno || {
-    numero: "001",
-    fecha: "2025-10-08",
-    hora: "10:00",
-    estacion: "2",
-    nombre: "Juan",
-    apellido: "Pérez",
-    telefono: "1123456789",
-    marca: "Renault",
-    modelo: "Duster",
-    anio: "2025",
-    patente: "ABC123",
-    servicio: "Cambio de aceite",
-    estado: "Reservado", // para consistencia con TurnosView
-};
+  const turno = location.state?.turno || {};
 
-  const cliente = turno.nombre && turno.apellido ? `${turno.nombre} ${turno.apellido}` : "-";
-  const vehiculo = turno.marca && turno.modelo ? `${turno.marca} ${turno.modelo} (${turno.anio})` : "-";
-  
+  // Helpers para acceder a datos anidados
+  // Cliente
+  const clienteNombre = t => t.cliente?.nombre || "";
+  const clienteApellido = t => t.cliente?.apellido || "";
+  const clienteTelefono = t => t.cliente?.telefono || "";
+
+  // Vehículo
+  const vehiculoMarca = t => t.vehiculo?.marca || "";
+  const vehiculoModelo = t => t.vehiculo?.modelo || "";
+  const vehiculoAnio = t => t.vehiculo?.anio || "";
+  const vehiculoPatente = t => t.vehiculo?.patente || "";
+
   // Hora actual autocompletada
-  const horaActual = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  const horaActual = new Date().toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 
   // Estado para inputs
   const [horaIngreso, setHoraIngreso] = useState(horaActual);
   const [estacionAsignada, setEstacionAsignada] = useState("");
   const [comentarios, setComentarios] = useState("");
-  
+
+  // Estados para mostrar mensajes flotantes
+  const [mensaje, setMensaje] = useState(null);
+  const [tipoMensaje, setTipoMensaje] = useState("exito");
+
   const handleCancelar = () => {
-    navigate("/turnos-view"); // ruta hacia TurnosView
+    navigate("/turnos-view");
   };
 
-  const handleConfirmarIngreso = () => {
-    // Creamos la orden con los datos necesarios
-    const orden = {
-      ...turno,
-      horaIngreso,
-      estacionAsignada: estacionAsignada || turno.estacion,
-      comentarios,
-    };
+  const handleConfirmarIngreso = async () => {
+  if (!turno || (!turno.numero && !turno._id)) {
+    setMensaje("No se encontró información del turno.");
+    setTipoMensaje("error");
+    setTimeout(() => setMensaje(null), 3000);
+    return;
+  }
 
-    console.log("Ingreso confirmado, orden enviada al taller:", orden);
+  //   OBJETO ORDEN DE TRABAJO
+  
+  const orden = {
+    // --- Identificadores ---
+    turnoNumero: turno._id || turno.numero,
 
-    // Redirigimos a OrdenesView
-    navigate("/ordenes-view", { state: { orden } });
+    // --- Cliente ---
+    cliente: {
+      nombre: turno.cliente?.nombre || "",
+      apellido: turno.cliente?.apellido || "",
+      telefono: turno.cliente?.telefono || "-",
+      email: turno.cliente?.email || "",
+    },
+
+    // --- Vehículo ---
+    vehiculo: {
+      marca: turno.vehiculo?.marca || "-",
+      modelo: turno.vehiculo?.modelo || "",
+      anio: turno.vehiculo?.anio || "",
+      patente: turno.vehiculo?.patente || "-",
+    },
+
+    // --- Servicio y observaciones ---
+    servicio: turno.servicio || "-",
+    comentarios: comentarios || "",
+
+    // --- Fechas IMPORTANTES ---
+    fechaTurno: turno.fecha || null,                 // Fecha solicitada del turno
+    fechaIngreso: new Date().toISOString(),          // Fecha real de ingreso
+    horaIngreso: horaIngreso || new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+
+    // --- Estado y estación ---
+    estado: "PENDIENTE",
+    estacion: estacionAsignada || turno.estacion,
+
+    // --- Metainformación ---
+    creadoPor: "sistema",
+    createdAt: new Date().toISOString(),
   };
+
+  console.log("Enviando orden al backend:", orden);
+
+  try {
+    const creada = await createOrden(orden);
+
+    if (creada) {
+      setMensaje("Orden de trabajo generada correctamente.");
+      setTipoMensaje("exito");
+
+      setTimeout(() => {
+        navigate("/turnos-view", {
+          state: { turnoConOrden: turno._id || turno.numero },
+        });
+      }, 2000);
+
+      setTimeout(() => setMensaje(null), 2500);
+    } else {
+      setTipoMensaje("error");
+      setMensaje("Error al crear la orden.");
+      setTimeout(() => setMensaje(null), 3000);
+    }
+  } catch (error) {
+    console.error("Error al crear la orden:", error);
+    setTipoMensaje("error");
+    setMensaje("Error de conexión con el servidor.");
+    setTimeout(() => setMensaje(null), 3000);
+  }
+};
+    console.log(">>> Turno recibido en OrdenTrabajo:", turno);
+
 
   return (
     <div className="orden-page">
@@ -67,31 +134,34 @@ function OrdenTrabajo() {
           <h1>Orden de Trabajo / Ingreso de Vehículo</h1>
 
           <div className="orden-container">
-            {/* Rectángulo 1: Datos del turno */}
+            {/* --- DATOS DEL TURNO --- */}
             <div className="card-like datos-turno">
               <div className="columna">
-                <p><strong>Turno N°:</strong> #{turno.numero}</p>
-                <p><strong>Fecha:</strong> {turno.fecha}</p>
-                <p><strong>Hora:</strong> {turno.hora}</p>
-                <p><strong>Estación N°:</strong> {turno.estacion}</p>
+                {/*<p><strong>Turno N°:</strong> {turno.numero || turno._id || "-"}</p>*/}
+                <p><strong>Fecha:</strong> {turno.fecha ? formatDateForSummary(turno.fecha) : "-"}</p>
+                <p><strong>Hora:</strong> {turno.hora || "-"}</p>
+                <p><strong>Estación N°:</strong> {turno.estacion || "-"}</p>
+                 <p><strong>Servicio:</strong> {turno.servicio || "-"}</p>
               </div>
               <div className="columna">
-                <p><strong>Cliente:</strong> {cliente}</p>
-                <p><strong>Teléfono:</strong> {turno.telefono || "-"}</p>
-                <p><strong>Vehículo:</strong> {vehiculo}</p>
-                <p><strong>Servicio:</strong> {turno.servicio}</p>
+                <p><strong>Cliente:</strong> {`${clienteNombre(turno)} ${clienteApellido(turno)}`}</p>
+                <p><strong>Teléfono:</strong> {clienteTelefono(turno)}</p>
+                <p><strong>Vehículo:</strong> {`${vehiculoMarca(turno)} ${vehiculoModelo(turno)} (${vehiculoAnio(turno)})`}</p>
+                <p><strong>Patente:</strong> {vehiculoPatente(turno)}</p>
+               
               </div>
             </div>
 
-            {/* Rectángulo 2: Ingreso al taller */}
+            {/* --- INGRESO AL TALLER --- */}
             <div className="card-like ingreso-taller">
               <div className="fila-superior">
                 <div className="campo">
                   <label>Hora de ingreso:</label>
-                  <input 
+                  <input
                     type="time"
                     value={horaIngreso}
-                    onChange={(e) => setHoraIngreso(e.target.value)} />
+                    onChange={(e) => setHoraIngreso(e.target.value)}
+                  />
                 </div>
                 <div className="campo">
                   <label>Reasignar estación:</label>
@@ -112,26 +182,37 @@ function OrdenTrabajo() {
 
               <div className="comentarios">
                 <label>Comentarios:</label>
-                <textarea 
-                  rows="6" 
-                  placeholder="Observaciones o detalles adicionales..." 
+                <textarea
+                  rows="6"
+                  placeholder="Observaciones o detalles adicionales..."
                   value={comentarios}
                   onChange={(e) => setComentarios(e.target.value)}
                 />
               </div>
             </div>
 
+            {/* --- BOTONES --- */}
             <div className="botones-container">
-                <button className="cancel-btn" onClick={handleCancelar}>Cancelar</button>
-                <button className="save-btn" onClick={handleConfirmarIngreso}>Confirmar ingreso</button>
+              <button className="cancel-btn" onClick={handleCancelar}>
+                Cancelar
+              </button>
+              <button className="save-btn" onClick={handleConfirmarIngreso}>
+                Confirmar ingreso
+              </button>
+              {mensaje && (
+                <div className={`mensaje-flotante unificado ${tipoMensaje === "exito" ? "exito" : "error"}`}>
+                  {mensaje}
+                </div>
+              )}
             </div>
-            
           </div>
         </main>
       </div>
       <Footer />
     </div>
+    
   );
 }
 
 export default OrdenTrabajo;
+

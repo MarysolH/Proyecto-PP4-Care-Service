@@ -1,9 +1,9 @@
-App.jsx: componente principal que va a manejar la navegación básica.
+# Care Service
 
-App.css: estilos globales para la App.
+Sistema integral para la gestión de talleres de concesionarias automotrices, optimizando turnos, clientes, vehículos y servicios.
 
-main.jsx: punto de entrada de React.
+## Tecnologías
+- **Frontend:** React, CSS
+- **Backend:** Node.js, Express
+- **Base de datos:** MongoDB
 
-index.css: estilos globales base (reseteo, fuentes, colores base).
-
-pages/: tus vistas, por ejemplo Login y Dashboard.

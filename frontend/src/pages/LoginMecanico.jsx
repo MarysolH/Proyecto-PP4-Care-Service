@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "./LoginMecanico.css";
+import "../styles/LoginMecanico.css";
 
 function LoginMecanico({ mecanico, onLogin, onClose }) {
   const [clave, setClave] = useState("");
@@ -9,7 +9,7 @@ function LoginMecanico({ mecanico, onLogin, onClose }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (clave.length === 4) {
-       navigate("/orden-taller", { state: { mecanico } });
+       navigate("/listado-ordenes", { state: { mecanico } });
     } else {
       alert("Clave incorrecta");
     }
@@ -22,10 +22,10 @@ function LoginMecanico({ mecanico, onLogin, onClose }) {
         <form onSubmit={handleSubmit}>
           <input
             type="password"
-            maxLength={4}
+            maxLength={8}
             value={clave}
             onChange={(e) => setClave(e.target.value)}
-            placeholder="Ingrese clave 4 dígitos"
+            placeholder="Ingrese su clave"
             autoFocus
           />
           <div className="login-mecanico-buttons">

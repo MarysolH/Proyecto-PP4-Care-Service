@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Sidebar from "../components/Sidebar";
-import "./ComprobanteView.css";
+import "../styles/ComprobanteView.css";
 
 function ComprobanteView() {
   const location = useLocation();

@@ -1,13 +1,21 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Sidebar from "../components/Sidebar";
-import { useTurnos } from "../context/TurnosContext";
-import "./TurnosView.css";
+
+import { useTurnos} from "../context/TurnosContext";
+import { formatDateForSummary } from "../utils/dateUtils";
+import "../styles/TurnosView.css";
 
 function TurnosView() {
   const navigate = useNavigate();
+  const { turnos, refreshTurnos, loading } = useTurnos();
+
+  const location = useLocation();
+  const turnoConOrden = location.state?.turnoConOrden;
+
 
   const [filtros, setFiltros] = useState({
     fecha: "",
@@ -17,14 +25,27 @@ function TurnosView() {
     estado: "",
   });
 
-  const { turnos } = useTurnos();
+  useEffect(() => {
+    refreshTurnos(); // carga los turnos al abrir la vista
+  }, []);  
 
+  const clienteNombre = (t) => t.cliente?.nombre || t.nombre || "";
+  const clienteApellido = (t) => t.cliente?.apellido || t.apellido || "";
+  const clienteTelefono = (t) => t.cliente?.telefono || t.telefono || "";
+  const clienteEmail = (t) => t.cliente?.email || t.correo || "";
+
+  const vehiculoMarca = (t) => t.vehiculo?.marca || t.marca || "";
+  const vehiculoModelo = (t) => t.vehiculo?.modelo || t.modelo || "";
+  const vehiculoPatente = (t) => t.vehiculo?.patente || t.patente || "";
+
+  // Manejo de filtros
   const handleChange = (e) => {
     setFiltros({ ...filtros, [e.target.name]: e.target.value });
   };
-
-  // --- FILTRADO ---
+  
   const turnosFiltrados = turnos.filter((t) => {
+    const estado = String(t.estado || "").toLowerCase();
+    const filtroEstado = String(filtros.estado || "").toLowerCase();
     return (
       (!filtros.fecha || t.fecha === filtros.fecha) &&
       (!filtros.hora || t.hora === filtros.hora) &&
@@ -43,19 +64,51 @@ function TurnosView() {
     return a.estacion > b.estacion ? 1 : -1;
   });
 
+  // --- Convertimos turnos cancelados en disponibles
+  const turnosVisibles = turnosOrdenados.map((t) => {
+    if (t.estado === "Cancelado") {
+      return { ...t, estado: "Disponible", fueCancelado: true};
+    }
+
+
+    return t;
+  });
+
+  // Navegaciones
+  const handleModificar = (t) => {
+    const turnoParaEditar = {
+      _id: t._id,
+      cliente: t.cliente || null,
+      vehiculo: t.vehiculo || null,
+      nombre: clienteNombre(t),
+      apellido: clienteApellido(t),
+      correo: clienteEmail(t),
+      telefono: clienteTelefono(t),
+      patente: vehiculoPatente(t),
+      marca: vehiculoMarca(t),
+      modelo: vehiculoModelo(t),
+      anio: t.vehiculo?.anio || t.anio || "",
+      servicio: t.servicio,
+      fecha: t.fecha,
+      hora: t.hora,
+      estacion: t.estacion,
+      observaciones: t.observaciones || "",
+      estado: t.estado,
+    };
+
+    navigate("/agendar-turno", {
+      state: { turno: turnoParaEditar, isEditing: true, from: "turnos" },
+    });
+  };
+
   const handleReservar = (turno) => {
     navigate("/agendar-turno", {
       state: {
         hora: turno.hora,
         estacion: turno.estacion,
         fecha: turno.fecha,
+        from: "turnos" 
       },
-    });
-  };
-
-  const handleModificar = (t) => {
-    navigate("/agendar-turno", {
-      state: { turno: t, isEditing: true },
     });
   };
 
@@ -63,17 +116,26 @@ function TurnosView() {
     navigate("/orden-trabajo", { state: { turno: t } });
   };
 
-  const formatDate = (isoDate) => {
-    if (!isoDate) return "";
-    const [year, month, day] = isoDate.split("-");
-    return `${day}/${month}/${year.slice(-2)}`;
-  };
+   useEffect(() => {
+    if (location.state?.updated) {
+      console.log("↩ Regresaste desde AgendarTurno → refrescando turnos");
+      refreshTurnos();
 
+      // Limpiar flag para no repetir refresco
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
+
+  // Render principal
   return (
     <div className="turnos-page">
-      <Header username="Admin" />
+      <div className="header-fixed">
+        <Header username="Admin" />
+      </div>
+
       <div className="turnos-content">
         <Sidebar />
+
         <main className="turnos-main">
           <h1 className="turnos-title">Gestión de Turnos</h1>
 
@@ -91,12 +153,12 @@ function TurnosView() {
                     "patente",
                     "servicio",
                     "estado",
+                    "accion"
                   ].map((campo) => (
                     <th key={campo}>
                       {campo.charAt(0).toUpperCase() + campo.slice(1)}
                     </th>
-                  ))}
-                  <th>Acción</th>
+                  ))}                 
                 </tr>
 
                 {/* FILTROS EN CABECERA */}
@@ -133,18 +195,14 @@ function TurnosView() {
                       onChange={handleChange}
                     >
                       <option value="">Todas</option>
-                      <option value="1">1</option>
-                      <option value="2">2</option>
-                      <option value="3">3</option>
-                      <option value="4">4</option>
-                      <option value="5">5</option>
-
+                      {[1, 2, 3, 4, 5].map((e) => (
+                        <option key={e} value={e}>
+                          {e}
+                        </option>
+                      ))}
                     </select>
                   </th>
-                  <th></th>
-                  <th></th>
-                  <th></th>
-                  <th></th>
+                  <th colSpan="4"></th>                  
                   <th>
                     <input
                       type="text"
@@ -163,6 +221,7 @@ function TurnosView() {
                       <option value="">Todos</option>
                       <option value="Disponible">Disponible</option>
                       <option value="Reservado">Reservado</option>
+                      <option value="Cancelado">Cancelado</option>
                     </select>
                   </th>
                   <th></th>
@@ -170,50 +229,55 @@ function TurnosView() {
               </thead>
 
               <tbody>
-                {turnosOrdenados.length > 0 ? (
-                  turnosOrdenados.map((t) => (
+                {loading ? (
+                  <tr>
+                    <td colSpan="10" className="sin-resultados">
+                      Cargando turnos...
+                    </td>
+                  </tr>
+                ) : turnosVisibles.length > 0 ? (
+                  turnosVisibles.map((t) => (
                     <tr
-                      key={t.id}
+                      key={t._id || t.id}
                       className={
-                        t.estado === "Reservado"
+                        t.fueCancelado
+                          ? "fila-cancelado"
+                          : t.estado === "Reservado"
                           ? "fila-reservado"
                           : "fila-disponible"
                       }
                     >
-                      <td>{formatDate(t.fecha)}</td>
+                      <td>{formatDateForSummary(t.fecha)}</td>
                       <td>{t.hora}</td>
                       <td>{t.estacion}</td>
-                      <td>{t.nombre ? `${t.nombre} ${t.apellido}` : "-"}</td>
-                      <td>{t.telefono || "-"}</td>
-                      <td>{t.marca ? `${t.marca} ${t.modelo}` : "-"}</td>
-                      <td>{t.patente || "-"}</td>
+                      <td>{clienteNombre(t) ? `${clienteNombre(t)} ${clienteApellido(t)}` : "-"}</td>
+                      <td>{clienteTelefono(t) || "-"}</td>
+                      <td>{vehiculoMarca(t) ? `${vehiculoMarca(t)} ${vehiculoModelo(t)}` : "-"}</td>
+                      <td>{vehiculoPatente(t) || "-"}</td>
                       <td>{t.servicio || "-"}</td>
                       <td>
-                        <span className={`estado ${t.estado.toLowerCase()}`}>
-                          {t.estado}
+                        <span className={`estado ${String(t.estado).toLowerCase()}`}>
+                          {t.fueCancelado ? "Cancelado" : t.estado}
                         </span>
                       </td>
                       <td>
                         {t.estado === "Reservado" ? (
                           <>
-                            <button
-                              className="btn-ver"
-                              onClick={() => handleModificar(t)}
-                            >
+                            <button className="btn-ver" onClick={() => handleModificar(t)}>
                               Modificar
                             </button>
-                            <button
-                              className="btn-ot"
-                              onClick={() => handleGenerarOT(t)}
-                            >
-                              Generar OT
-                            </button>
+                            {t.ordenGenerada || t.estado === "En taller" || t._id === turnoConOrden ? (
+                              <button className="btn-taller" disabled>
+                                En taller
+                              </button>
+                            ) : (
+                              <button className="btn-ot" onClick={() => handleGenerarOT(t)}>
+                                Generar OT
+                              </button>
+                            )}
                           </>
                         ) : (
-                          <button
-                            className="btn-reservar"
-                            onClick={() => handleReservar(t)}
-                          >
+                          <button className="btn-reservar" onClick={() => handleReservar(t)}>
                             Reservar
                           </button>
                         )}

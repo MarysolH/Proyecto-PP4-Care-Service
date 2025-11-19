@@ -11,10 +11,10 @@ function Sidebar() {
     { name: "Inicio", icon: <FaHome />, path: "/dashboard" },
     { name: "Agenda de turnos", icon: <FaCalendarAlt />, path: "/agenda" },
     { name: "Gestión de turnos y Recepción", icon: <FaList />, path: "/turnos-view" },
-    { name: "Ingreso/Orden de trabajo", icon: <FaClipboardList />, path: "/orden-trabajo" },
+    /*{ name: "Ingreso/Orden de trabajo", icon: <FaClipboardList />, path: "/orden-trabajo" },*/
     { name: "Estados ordenes taller", icon: <FaCar />, path: "/ordenes-view" },
     { name: "Facturación", icon: <FaFileInvoiceDollar />, path: "/facturacion-view" },
-    { name: "Configuración de Taller", icon: <FaCog />, path: "/configuracion" },
+    { name: "Configuración Taller", icon: <FaCog />, path: "/configuracion-taller" },
     { name: "Vista Taller", icon: <FaTools />, path: "/taller" }, 
   ];
 

@@ -3,7 +3,7 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Sidebar from "../components/Sidebar";
 import { useLocation, useNavigate } from "react-router-dom";
-import "./DetalleOrden.css";
+import "../styles/DetalleOrden.css";
 
 function DetalleOrden() {
   const location = useLocation();
@@ -31,20 +31,21 @@ function DetalleOrden() {
           {/* Datos de la orden */}
           <div className="detalle-orden-card datos-generales">
              <div className="columna">
-                <p><strong>Turno N°:</strong> {orden.numero}</p>
-                <p><strong>Hora Ingreso:</strong> {orden.horaIngreso}</p>
-                <p><strong>Estación:</strong> {orden.estacion}</p>
-                <p><strong>Estado: </strong> 
+              
+              <p><strong>Hora Ingreso:</strong> {orden.horaIngreso}</p>
+              <p><strong>Estación:</strong> {orden.estacion}</p>
+              <p><strong>Estado: </strong>
                 <span className={`estado-orden ${orden.estado.replace(" ", "-")}`}>
-                    {orden.estado}
+                  {orden.estado}
                 </span>
-                </p>                
+              </p>
+              <p><strong>Servicio:</strong> {orden.servicio || "-"}</p>
             </div>
             <div className="columna">
-                <p><strong>Cliente:</strong> {orden.cliente}</p>
-                <p><strong>Teléfono:</strong> {orden.telefono}</p>
-                <p><strong>Vehículo:</strong> {orden.vehiculo}</p>
-                <p><strong>Servicio:</strong> {orden.servicio}</p>
+              <p><strong>Cliente:</strong> {`${orden.cliente?.nombre || ""} ${orden.cliente?.apellido || ""}`}</p>
+              <p><strong>Teléfono:</strong> {orden.cliente?.telefono || "-"}</p>
+              <p><strong>Vehículo:</strong> {`${orden.vehiculo?.marca || ""} ${orden.vehiculo?.modelo || ""} (${orden.vehiculo?.anio || ""})`}</p>
+              <p><strong>Patente:</strong> {orden.vehiculo?.patente || "-"}</p>              
             </div>
           </div>
 

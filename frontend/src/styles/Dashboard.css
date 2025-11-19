@@ -1,0 +1,103 @@
+/* Contenedor principal */
+.dashboard-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: #f5f5f5;
+}
+
+/* Contenido principal con sidebar y main */
+.dashboard-content {
+  display: flex;
+  flex: 1;
+  padding: 20px;
+}
+
+/* Área principal */
+.main-content {
+  flex: 1;
+  display: flex;
+  justify-content: flex-start; 
+  align-items: flex-start;     
+  padding-top: 40px;           
+}
+
+/* Contenedor de tarjetas: 3 arriba, 3 abajo */
+.cards-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(2, auto);
+  gap: 25px;
+  width: 80%; 
+  margin-top: 80px; 
+}
+
+/* Cada tarjeta */
+.card {
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 25px 50px;
+  width: 100%;
+  max-width: 250px;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Hover de tarjeta */
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  background-color: #d4d5d6;
+}
+
+/* Icono grande */
+.card-icon {
+  font-size: 3rem;
+  margin-bottom: 15px;
+  color: #605f5f;
+  transition: color 0.3s ease;
+}
+
+/* Cambia color del ícono al hacer hover */
+.card:hover .card-icon {
+  color: #424141;
+}
+
+/* Título de la tarjeta */
+.card h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .cards-container {
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: auto;
+    width: 90%;
+  }
+}
+
+@media (max-width: 768px) {
+  .cards-container {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    width: 95%;
+  }
+
+  .card-icon {
+    font-size: 2.5rem;
+  }
+
+  .card h3 {
+    font-size: 1rem;
+  }
+}
+
+

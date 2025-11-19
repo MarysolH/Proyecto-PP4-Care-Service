@@ -1,21 +1,36 @@
-import React, { useState }from "react";
+import React, { useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Sidebar from "../components/Sidebar";
 import { useLocation, useNavigate } from "react-router-dom";
-import "./FacturacionView.css";
+import "../styles/FacturacionView.css";
 
 function FacturacionView() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const orden = location.state?.orden;
+  const ordenRecibida = location.state?.orden;
 
-  if (!orden) {
+  if (!ordenRecibida) {
     return <p>No hay datos de la orden para facturar.</p>;
   }
 
-  // Simulamos importes base (en un caso real vendrían del backend o del contexto)
+  // Normalizamos cliente y vehículo igual que en OrdenTaller
+  const orden = {
+    ...ordenRecibida,
+    cliente: ordenRecibida.cliente || {
+      nombre: ordenRecibida.cliente?.nombre || ordenRecibida.clienteNombre || "-",
+      apellido: ordenRecibida.cliente?.apellido || ordenRecibida.clienteApellido || "",
+      telefono: ordenRecibida.cliente?.telefono || ordenRecibida.telefono || "-",
+    },
+    vehiculo: ordenRecibida.vehiculo || {
+      marca: ordenRecibida.vehiculo?.marca || ordenRecibida.vehiculoMarca || "-",
+      modelo: ordenRecibida.vehiculo?.modelo || ordenRecibida.vehiculoModelo || "-",
+      anio: ordenRecibida.vehiculo?.anio || ordenRecibida.vehiculoAnio || "-",
+      patente: ordenRecibida.vehiculo?.patente || ordenRecibida.patente || "-",
+    },
+  };
+
   const [servicios, setServicios] = useState([
     {
       descripcion: orden.servicio,
@@ -28,12 +43,12 @@ function FacturacionView() {
       precioUnitario: 5000,
     })) || []),
   ]);
- 
+
   const [editable, setEditable] = useState(false);
 
   const handleEditServicio = (index, campo, valor) => {
     const nuevos = [...servicios];
-    nuevos[index][campo] = valor;
+    nuevos[index][campo] = campo === "descripcion" ? valor : Number(valor);
     setServicios(nuevos);
   };
 
@@ -42,19 +57,13 @@ function FacturacionView() {
     setServicios(nuevos);
   };
 
-  const subtotal = servicios.reduce(
-    (acc, s) => acc + s.cantidad * s.precioUnitario,
-    0
-  );
+  const subtotal = servicios.reduce((acc, s) => acc + s.cantidad * s.precioUnitario, 0);
   const iva = subtotal * 0.21;
   const total = subtotal + iva;
 
   const handleConfirmarFactura = () => {
-    
-    navigate("/comprobante-view", { state: { orden }});
-  };   
-
-  
+    navigate("/comprobante-view", { state: { orden } });
+  };
 
   return (
     <div className="facturacion-page">
@@ -67,9 +76,9 @@ function FacturacionView() {
           {/* Datos del cliente */}
           <div className="facturacion-card datos-cliente">
             <h3>Datos del Cliente</h3>
-            <p><strong>Cliente:</strong> {orden.cliente}</p>
-            <p><strong>Teléfono:</strong> {orden.telefono}</p>
-            <p><strong>Vehículo:</strong> {orden.vehiculo}</p>
+            <p><strong>Cliente:</strong> {orden.cliente.nombre} {orden.cliente.apellido}</p>
+            <p><strong>Teléfono:</strong> {orden.cliente.telefono}</p>
+            <p><strong>Vehículo:</strong> {orden.vehiculo.marca} {orden.vehiculo.modelo} ({orden.vehiculo.patente})</p>
           </div>
 
           {/* Servicios */}
@@ -100,9 +109,7 @@ function FacturacionView() {
                         <input
                           type="text"
                           value={servicio.descripcion}
-                          onChange={(e) =>
-                            handleEditServicio(index, "descripcion", e.target.value)
-                          }
+                          onChange={(e) => handleEditServicio(index, "descripcion", e.target.value)}
                         />
                       ) : (
                         servicio.descripcion
@@ -114,9 +121,7 @@ function FacturacionView() {
                           type="number"
                           min="1"
                           value={servicio.cantidad}
-                          onChange={(e) =>
-                            handleEditServicio(index, "cantidad", e.target.value)
-                          }
+                          onChange={(e) => handleEditServicio(index, "cantidad", e.target.value)}
                         />
                       ) : (
                         servicio.cantidad
@@ -129,9 +134,7 @@ function FacturacionView() {
                           min="0"
                           step="0.01"
                           value={servicio.precioUnitario}
-                          onChange={(e) =>
-                            handleEditServicio(index, "precioUnitario", e.target.value)
-                          }
+                          onChange={(e) => handleEditServicio(index, "precioUnitario", e.target.value)}
                         />
                       ) : (
                         `$ ${servicio.precioUnitario}`
@@ -158,14 +161,11 @@ function FacturacionView() {
           <div className="facturacion-card totales">
             <p><strong>Subtotal:</strong> ${subtotal.toLocaleString("es-AR")}</p>
             <p><strong>IVA (21%):</strong> ${iva.toLocaleString("es-AR")}</p>
-            <p className="facturacion-total">
-              <strong>Total:</strong> ${total.toLocaleString("es-AR")}
-            </p>
+            <p className="facturacion-total"><strong>Total:</strong> ${total.toLocaleString("es-AR")}</p>
           </div>
 
           {/* Botones */}
           <div className="facturacion-botones">
-            
             <button
               className="facturacion-btn facturacion-btn-volver"
               onClick={() => navigate("/detalle-orden", { state: { orden } })}
@@ -178,7 +178,6 @@ function FacturacionView() {
             >
               Confirmar Factura
             </button>
-            
           </div>
         </main>
       </div>

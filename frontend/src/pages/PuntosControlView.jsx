@@ -2,7 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import "./PuntosControlView.css";
+import "../styles/PuntosControlView.css";
 import auto from "../assets/auto.jpg"; // imagen única
 
 function PuntosControlView({ onVolver }) {

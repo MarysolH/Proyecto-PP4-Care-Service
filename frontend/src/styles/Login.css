@@ -1,0 +1,94 @@
+.login-container {
+  background-color: #6B6A6A;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Poppins', sans-serif;
+  position: relative;
+}
+
+.login-box {
+  background-color: #d8d8d8;
+  padding: 40px;
+  border-radius: 10px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+  width: 340px;
+  text-align: center;
+}
+
+.login-title {
+  font-size: 24px;
+  color: #1a1a1a;
+  margin-bottom: 35px;
+}
+
+.login-input {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 15px;
+  border: 1px solid #bbb;
+  border-radius: 8px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.login-button {
+  background-color: #3a5774;
+  color: white;
+  border: none;
+  padding: 12px;
+  width: 100%; 
+  margin-top: 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 15px;
+  transition: background-color 0.2s ease;
+}
+
+.login-button:hover {
+  background-color: #2a3b4d;
+}
+
+/* Mensaje flotante de error */
+.mensaje-flotante {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  background-color: #fff;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  z-index: 1000;
+  font-weight: bold;
+  min-width: 280px;
+  text-align: center;
+}
+
+.mensaje-flotante.error {
+  border-left: 5px solid #e74c3c;
+  color: #c0392b;
+}
+
+.login-switch {
+  margin-top: 5.5rem;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+}
+
+.link-btn {
+  background: none;
+  border: none;
+  color: #0c3a6a;
+  font-size: 0.85rem;
+  cursor: pointer;
+  text-decoration: underline;
+  transition: color 0.3s;
+}
+
+.link-btn:hover {
+  color: #0056b3;
+}

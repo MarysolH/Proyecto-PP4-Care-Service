@@ -1,48 +1,73 @@
-import React, { useState} from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import LoginMecanico from "./LoginMecanico";
-import "./Taller.css";
+
+import { getEstaciones } from "../services/estacionesService";
+import { getUsuarios } from "../services/usuariosService";
+
+import "../styles/Taller.css";
 
 function Taller() {
   const [loginVisible, setLoginVisible] = useState(false);
   const [mecanicoSeleccionado, setMecanicoSeleccionado] = useState(null);
+  const [estaciones, setEstaciones] = useState([]);
+  const [mecanicos, setMecanicos] = useState([]);
   const navigate = useNavigate();
 
-  // Datos simulados de estaciones y mecánicos
-  const estaciones = [
-    { numero: 1, mecanico: "Carlos Pérez", pendientes: 1, enCurso: 1 },
-    { numero: 2, mecanico: "Mariana López", pendientes: 0, enCurso: 1 },
-    { numero: 3, mecanico: "Luis Torres", pendientes: 2, enCurso: 0 },
-    { numero: 4, mecanico: "Ana Martínez", pendientes: 1, enCurso: 1 },
-    { numero: 5, mecanico: "Jorge Díaz", pendientes: 0, enCurso: 0 },
-  ];
+  useEffect(() => {
+    cargarDatos();
+  }, []);
+
+  const cargarDatos = async () => {
+    try {
+      const est = await getEstaciones(); // trae { _id, numero, mecanico }
+      const usuarios = await getUsuarios(); // trae todos los usuarios
+
+      // Filtrar solo mecánicos
+      const mec = usuarios.filter((u) => u.rol === "mecanico");
+      setMecanicos(mec);
+
+      // Combinar: reemplazar el _id del mecánico por objeto con nombre/apellido
+      const estacionesConMec = est.map((e) => {
+        const mecId = typeof e.mecanico === "string" 
+          ? e.mecanico 
+          : e.mecanico?._id;
+
+  const m = mec.find((u) => u._id === mecId);
+
+        return {
+          ...e,
+          mecanico: m ? { _id: m._id, nombre: m.nombre, apellido: m.apellido } : null,
+        };
+      });
+
+      setEstaciones(estacionesConMec);
+    } catch (err) {
+      console.error("Error cargando estaciones o mecánicos:", err);
+    }
+  };
 
   const handleCardClick = (mecanico) => {
-    setMecanicoSeleccionado(mecanico);
+    if (!mecanico) return;
+    setMecanicoSeleccionado(`${mecanico.apellido}, ${mecanico.nombre}`);
     setLoginVisible(true);
   };
 
-  const handleLogin = (mecanico, clave) => {
-    console.log("Login de:", mecanico, "Clave:", clave);
-    // Aquí redirigir a Ordenes pendientes/en curso
+  const handleLogin = (clave) => {
+    if (!mecanicoSeleccionado) return;
     setLoginVisible(false);
-
-    // Redirigir a la pantalla del taller del mecánico
-    navigate("/orden-taller", { state: { mecanico } });
+    navigate("/orden-taller", { state: { mecanico: mecanicoSeleccionado } });
   };
 
-  const handleCloseLogin = () => {
-    setLoginVisible(false);
-  };
-
+  const handleCloseLogin = () => setLoginVisible(false);
 
   return (
     <div className="taller-page">
-      <Header username="Taller" />    
+      <Header username="Taller" />
       <main className="taller-main">
-        <button 
+        <button
           className="volver-desarrollo"
           onClick={() => navigate("/dashboard")}
           style={{ marginBottom: "20px" }}
@@ -53,20 +78,26 @@ function Taller() {
         <h1 className="taller-title">Taller</h1>
 
         <div className="taller-cards-container">
-          {estaciones.map((estacion) => (
-            <div key={estacion.numero} className="taller-card"
-            onClick={() => handleCardClick(estacion.mecanico)}
+          {estaciones.map((est) => (
+            <div
+              key={est._id}
+              className="taller-card"
+              onClick={() => handleCardClick(est.mecanico)}
             >
               <p className="taller-label">ESTACIÓN</p>
-              <h2 className="taller-number">{estacion.numero}</h2>
-              <p className="taller-mechanic">{estacion.mecanico}</p>
+              <h2 className="taller-number">{est.numero}</h2>
+              <p className="taller-mechanic">
+                {est.mecanico
+                  ? `${est.mecanico.apellido}, ${est.mecanico.nombre}`
+                  : "Sin asignar"}
+              </p>
 
               <div className="taller-status">
                 <p className="pendientes">
-                  Pendientes <span>{estacion.pendientes}</span>
+                  Pendientes <span>0</span>
                 </p>
                 <p className="en-curso">
-                  En curso <span>{estacion.enCurso}</span>
+                  En curso <span>0</span>
                 </p>
               </div>
             </div>
@@ -75,7 +106,8 @@ function Taller() {
       </main>
 
       <Footer />
-      {loginVisible && (
+
+      {loginVisible && mecanicoSeleccionado && (
         <LoginMecanico
           mecanico={mecanicoSeleccionado}
           onLogin={handleLogin}

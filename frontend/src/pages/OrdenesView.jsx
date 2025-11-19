@@ -1,43 +1,47 @@
-import React from "react";
-import Header from "../components/Header";
-import Footer from "../components/Footer";
-import Sidebar from "../components/Sidebar";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "./OrdenesView.css";
+import Header from "../components/Header";
+import Sidebar from "../components/Sidebar";
+import Footer from "../components/Footer";
+import { getOrdenes } from "../services/ordenesService";
+import { useTurnos } from "../context/TurnosContext";
+import "../styles/OrdenesView.css";
 
-// Datos simulados; después se conectará con backend
-const ordenesSimuladas = [
-  {
-    id: 1,
-    turnoNumero: "001",
-    cliente: "Juan Pérez",
-    vehiculo: "Renault Duster",
-    estado: "FINALIZADO",
-    horaIngreso: "10:00",
-    estacion: "2",
-  },
-  {
-    id: 2,
-    turnoNumero: "002",
-    cliente: "Ana López",
-    vehiculo: "Renault Arkana",
-    estado: "EN CURSO",
-    horaIngreso: "10:30",
-    estacion: "1",
-  },
-  {
-    id: 3,
-    turnoNumero: "003",
-    cliente: "Carlos Gómez",
-    vehiculo: "Renault Kwid",
-    estado: "PENDIENTE",
-    horaIngreso: "11:00",
-    estacion: "3",
-  },
-];
-
-function OrdenesView() {
+export default function OrdenesView({ username = "Administrativo" }) {
+  const [ordenes, setOrdenes] = useState([]);
+  const { turnos } = useTurnos(); 
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchOrdenes = async () => {
+      try {
+        const data = (await getOrdenes()) || [];
+
+        // Fecha de hoy en formato YYYY-MM-DD
+        const hoy = new Date();
+        const hoyStr = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, "0")}-${String(hoy.getDate()).padStart(2, "0")}`;
+
+        // Filtramos solo órdenes de hoy
+        const ordenesHoy = data.filter((o) => {
+          const fechaOrdenStr = o.fechaIngreso || o.createdAt || o.fechaTurno;
+          if (!fechaOrdenStr) return false;
+
+          const fechaOrden = new Date(fechaOrdenStr);
+          return (
+            fechaOrden.getFullYear() === hoy.getFullYear() &&
+            fechaOrden.getMonth() === hoy.getMonth() &&
+            fechaOrden.getDate() === hoy.getDate()
+          );
+        });
+
+        setOrdenes(ordenesHoy);
+      } catch (err) {
+        console.error("Error cargando órdenes:", err);
+      }
+    };
+
+    fetchOrdenes();
+  }, [turnos]); // se recarga automáticamente al cambiar turnos
 
   const handleVerDetalle = (orden) => {
     navigate("/detalle-orden", { state: { orden } });
@@ -45,52 +49,52 @@ function OrdenesView() {
 
   return (
     <div className="ordenes-view-page">
-  <Header username="Admin" />
-  <div className="ordenes-view-content">
-    <Sidebar/>
-    <main className="ordenes-view-main">
-      <h1 className="ordenes-view-title">Estado Ordenes Taller</h1>
-
-      <div className="ordenes-view-tabla-container">
-        <table className="ordenes-view-table">
-          <thead>
-            <tr>
-              <th>Turno N°</th>
-              <th>Cliente</th>
-              <th>Vehículo</th>
-              <th>Estado</th>
-              <th>Hora Ingreso</th>
-              <th>Estación</th>
-              <th>Acción</th>
-            </tr>
-          </thead>
-          <tbody>
-            {ordenesSimuladas.map((orden) => (
-              <tr key={orden.id}>
-                <td>{orden.turnoNumero}</td>
-                <td>{orden.cliente}</td>
-                <td>{orden.vehiculo}</td>
-                <td className={`estado-orden ${orden.estado.replace(" ", "-")}`}>
-                  {orden.estado}
-                </td>
-                <td>{orden.horaIngreso}</td>
-                <td>{orden.estacion}</td>
-                <td>
-                  <button className="detalle-btn"onClick={() => handleVerDetalle(orden)}>
-                    Ver detalle
-                  </button>
-                </td>
+      <Header username={username} />
+      <div className="ordenes-view-content">
+        <Sidebar />
+        <main className="ordenes-view-main">
+          <h1>Órdenes en Taller </h1>
+          <table className="ordenes-view-table">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Servicio</th>
+                <th>Cliente</th>
+                <th>Vehículo</th>
+                <th>Estado</th>
+                <th>Hora Ingreso</th>
+                <th>Estación</th>
+                <th>Acción</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {ordenes.length > 0 ? (
+                ordenes.map((orden) => (
+                  <tr key={orden._id}>
+                    <td>{new Date(orden.fechaTurno || orden.fechaIngreso || orden.createdAt).toLocaleDateString("es-AR")}</td>
+                    <td>{orden.servicio || "-"}</td>
+                    <td>{orden.cliente ? `${orden.cliente.nombre} ${orden.cliente.apellido}` : "-"}</td>
+                    <td>{orden.vehiculo ? `${orden.vehiculo.marca} ${orden.vehiculo.modelo} (${orden.vehiculo.patente})` : "-"}</td>
+                    <td className={`estado-orden ${orden.estado?.toUpperCase().replace(/\s+/g, "-")}`}>
+                      {orden.estado || "-"}
+                    </td>
+                    <td>{orden.horaIngreso || "-"}</td>
+                    <td>{orden.estacion || "-"}</td>
+                    <td>
+                      <button onClick={() => handleVerDetalle(orden)}>Ver detalle</button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="8" style={{ textAlign: "center" }}>No hay órdenes registradas para hoy</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </main>
       </div>
-    </main>
-  </div>
-  <Footer />
-</div>
-
+      <Footer />
+    </div>
   );
 }
-
-export default OrdenesView;

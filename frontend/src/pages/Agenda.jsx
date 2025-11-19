@@ -1,176 +1,174 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+
+// Componentes UI
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Sidebar from "../components/Sidebar";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
+import TurnoPopup from "../components/Agenda/TurnoPopup";
+
+
+// Contexto y servicios
 import { useTurnos } from "../context/TurnosContext";
-import "./Agenda.css";
+import { cancelarTurno } from "../services/turnosService";
 
-// Convierte Date o string YYYY-MM-DD a YYYY-MM-DD local
-function formatDateLocal(date) {
-  if (!date) return "";
-  let d;
-  if (date instanceof Date) {
-    d = date;
-  } else if (typeof date === "string") {
-    const [y, m, day] = date.split("-");
-    d = new Date(y, m - 1, day);
-  }
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
-}
+// Utils
+import { formatDateLocal, getColor } from "../utils/dateUtils";
 
-// Formatea YYYY-MM-DD -> dd/mm/yy
-function formatDateForSummary(fechaStr) {
-  if (!fechaStr) return "";
-  const [y, m, d] = fechaStr.split("-");
-  return `${d}/${m}/${y.slice(-2)}`;
-}
+// Estilos
+import "../styles/Agenda.css";
 
 
 function Agenda() {
   const navigate = useNavigate();
+  const { turnos: ctxTurnos, refreshTurnos, loading } = useTurnos() || {};
+  
+  const turnos = Array.isArray(ctxTurnos) ? ctxTurnos : [];
 
-  // FECHAS Y TURNOS
+  // Configuración fechas
   const today = new Date();
   const maxDate = new Date();
-  maxDate.setDate(today.getDate() + 14); // 2 semanas adelante
-
-  //Bloquea domingos
+  maxDate.setDate(today.getDate() + 14);
   const isSelectable = (date) => date.getDay() !== 0;
-  
-  // Fecha seleccionada
+
+  // Estados locales
   const [selectedDate, setSelectedDate] = useState(today);
+  const [turnoSeleccionado, setTurnoSeleccionado] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [mensaje, setMensaje] = useState("");
+  const [tipoMensaje, setTipoMensaje] = useState("");
   
-  // Modal
-  const [turnoSeleccionado, setTurnoSeleccionado] = useState(null); 
-  const [mostrarModal, setMostrarModal] = useState(false);
-  const [posicionModal, setPosicionModal] = useState({ top: 0, left: 0 });
-  const modalRef = useRef(null);
+  // Datos fijos
+  const horas = [
+    "09:00",
+    "10:00",
+    "11:00",
+    "12:00",
+    "13:00",
+    "14:00",
+    "15:00",
+    "16:00",
+  ];
+  const estaciones = ["1", "2", "3", "4", "5"];
 
-  // Horarios y estaciones
-  const horas = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00"];
-  const estaciones = ["Estación 1", "Estación 2", "Estación 3", "Estación 4", "Estación 5"];
-
-  const { turnos, setTurnos } = useTurnos();
-
+  // Cargar turnos 
   useEffect(() => {
-  const nuevosTurnos = [];
-
-  horas.forEach((hora) => {
-    estaciones.forEach((_, idx) => {
-      if (idx === estaciones.length - 1) return; // estación contingencia
-      const estado = Math.random() < 0.3 ? "Reservado" : "Disponible";
-
-      nuevosTurnos.push({
-        id: `${selectedDate}-${hora}-${idx + 1}`,
-        fecha: selectedDate.toISOString().slice(0, 10),
-        hora,
-        estacion: `${idx + 1}`,
-        estado,
-        cliente: estado === "Reservado" ? "Cliente Ejemplo" : null,
-        telefono: estado === "Reservado" ? "1123456789" : null,
-        vehiculo: estado === "Reservado" ? "Renault Duster" : null,
-        patente: estado === "Reservado" ? "AB123CD" : null,
-        servicio: estado === "Reservado" ? "Cambio de aceite" : null,
-      });
-    });
-  });
-
-  setTurnos(nuevosTurnos);
-}, [selectedDate, setTurnos]);
-
-
-  const getColor = (estado) => {
-    switch (estado) {
-      case "Reservado":
-        return "#d1d1d1"; 
-      case "Disponible":
-        return "#ffffff"; 
-      case "Contingencia":
-        return "#646464ff"; 
-      default:
-        return "#ffffff";
+    if (typeof refreshTurnos === "function") {
+      refreshTurnos();
     }
+  }, [selectedDate]); 
+
+  // Filtrar turnos del día seleccionado
+  const fechaSeleccionadaStr = formatDateLocal(selectedDate);
+  const turnosDelDia = turnos.filter(
+    (t) => t && t.fecha === fechaSeleccionadaStr && t.estado !== "Cancelado"
+  );
+
+  // Abrir/crear turno
+  const handleCellClick = (turno, hora, estacion) => {
+    const fechaStr = fechaSeleccionadaStr;
+    if (estacion === "5") return; // Contingencia, no clickeable
+
+      // Si el turno está reservado
+    if (turno && turno.estado === "Reservado") {
+      // Evita reabrir el modal si ya está abierto para el mismo turno
+      if (isModalOpen && turnoSeleccionado?.id === turno.id) return;
+
+      setTurnoSeleccionado(turno);
+      setIsModalOpen(true);
+      return;
+    }
+    // Si no hay turno reservado, navegar a agendar
+    navigate("/agendar-turno", { state: { hora, estacion, fecha: fechaStr } });
   };
 
-  const handleCellClick = (estado, hora, estacion, event) => {    
-    const fechaStr = formatDateLocal(selectedDate);
-
-    if (estado === "Reservado") {
-      const rect = event.target.getBoundingClientRect();
-      setPosicionModal({
-        top: rect.top + window.scrollY - 10,
-        left: rect.right + window.scrollX + 10,
-      });
-      setTurnoSeleccionado({
-        estado,
-        hora,
-        estacion,
-        fecha: fechaStr,
-        cliente: "N/A",
-        modelo: "N/A",
-        patente: "N/A",
-        servicio: "N/A",
-      });
-      setMostrarModal(true);
-    } else if (estado === "Disponible") {
-      // Navega con fecha formateada correctamente
-      navigate("/agendar-turno", {
-        state: { hora, estacion, fecha: fechaStr },
-      });
-    }
-  };
-
+  // Cerrar modal
   const cerrarModal = () => {
-    setMostrarModal(false);
+    setIsModalOpen(false);
     setTurnoSeleccionado(null);
   };
 
+  // Modificar turno
   const handleModificar = () => {
-     if (!turnoSeleccionado) return;
-    navigate("/agendar-turno", { state: { turno: turnoSeleccionado, isEditing: true } });
-  };
+    if (!turnoSeleccionado) return;
 
-  const handleCancelar = () => {
-    alert("Turno cancelado (simulado).");
+    navigate("/agendar-turno", {
+      state: { turno: turnoSeleccionado, isEditing: true },
+    });
     cerrarModal();
   };
 
-   // Cierra el modal al hacer click fuera
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (modalRef.current && !modalRef.current.contains(event.target)) {
-        cerrarModal();
-      }
-    };
-    if (mostrarModal) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [mostrarModal]);
+  // Cancelar turno
+  const handleCancelar = async (idTurno) => {
+    if (!idTurno) return;
 
+    setMensaje("Cancelando turno...");
+    setTipoMensaje("info");
+
+    try {
+      const cancelado = await cancelarTurno(idTurno);
+
+      if (cancelado) {
+        setMensaje("Turno cancelado correctamente.");
+        setTipoMensaje("exito");
+        if (typeof refreshTurnos === "function") await refreshTurnos();
+        cerrarModal();
+      } else {
+        setMensaje("Error al cancelar el turno.");
+        setTipoMensaje("error");
+      }
+    } catch (error) {
+      console.error("Error al cancelar el turno:", error);
+      setMensaje("Ocurrió un error al cancelar el turno.");
+      setTipoMensaje("error");
+    } finally {
+      setTimeout(() => setMensaje(""), 3000);
+    }
+  };
+
+  // Loading
+  if (loading) return <p>Cargando turnos...</p>;
+  
   
 
+  // Render principal
   return (
     <div className="agenda-container">
       <Header username="Admin" />
       <div className="agenda-content">
         <Sidebar />
+
         <main className="main-content">
           <div className="agenda-header">
-            <h1>Agenda de Turnos</h1>            
+            <h1>Agenda de Turnos</h1>
           </div>
 
-          <div className="agenda-columns" style={{ display: 'flex', gap: '30px', alignItems: 'flex-start' }}>
+          {/* Mensaje de estado */}
+          {mensaje && (
+            <div
+              className={`mensaje ${tipoMensaje}`}
+              style={{
+                padding: "10px",
+                borderRadius: "8px",
+                marginBottom: "15px",
+                textAlign: "center",
+                color: tipoMensaje === "exito" ? "#155724" : "#721c24",
+                backgroundColor: tipoMensaje === "exito" ? "#d4edda" : "#f8d7da",
+                border: tipoMensaje === "exito" ? "1px solid #c3e6cb" : "1px solid #f5c6cb",
+                fontWeight: "500",
+              }}
+            >
+              {mensaje}
+            </div>
+          )}
 
-            {/* Columna izquierda: calendarios */}
+          {/* Contenido principal */}
+          <div
+            className="agenda-columns"
+            style={{ display: "flex", gap: "30px", alignItems: "flex-start" }}
+          >
             <div className="calendarios-container">
               <DatePicker
                 inline
@@ -192,88 +190,66 @@ function Agenda() {
               />
             </div>
 
-            {/* Columna derecha: tabla */}
+            {/* Tabla de turnos */}
             <div className="table-container">
               <table>
                 <thead>
                   <tr>
                     <th>Horario</th>
-                    {estaciones.map((est, idx) => (
-                      <th key={idx}>{est}</th>
+                    {estaciones.map((est) => (
+                      <th key={est}>Estación {est}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {horas.map((hora) => {
-                    const turnosPorHora = turnos.filter(t => t.hora === hora);
+                  {horas.map((hora) => (
+                    <tr key={hora}>
+                      <td>{hora}</td>
+                      {estaciones.map((estacion) => {
+                        const turno = turnosDelDia.find(
+                          (t) => t.hora === hora && t.estacion === estacion
+                        );
+                        const estado = turno ? turno.estado : "Disponible";
 
-                    return (
-                      <tr key={hora}>
-                        <td>{hora}</td>
-                        {estaciones.map((_, idx) => {
-                          if (idx === estaciones.length - 1) return <td key={idx}style={{
-                            backgroundColor: getColor("Contingencia"),
-                            color: "#fff",
-                            textAlign: "center",
-                          }}>Contingencia</td>;
-                          const t = turnosPorHora[idx]; // toma turno correspondiente
-                          const estado = t ? t.estado : "Disponible";
-
+                        if (estacion === "5") {
                           return (
-                            <td
-                              key={idx}
-                              style={{
-                                backgroundColor: getColor(estado),
-                                color: "#0f0606",
-                                textAlign: "center",
-                                cursor: estado === "Reservado" ? "pointer" : "default",
-                                opacity: estado === "Reservado" ? 0.8 : 1,
-                              }}
-                              onClick={(e) => handleCellClick(
-                                estado,
-                                hora,
-                                `${idx + 1}`,
-                                e
-                              )}
-                            >
-                              {estado}
+                            <td key={estacion} className="columna-contingencia">
+                              Contingencia
                             </td>
                           );
-                        })}
-                      </tr>
-                    );
-                  })}
+                        }
+
+                        return (
+                          <td
+                            key={estacion}
+                            style={{
+                              backgroundColor: getColor(estado),
+                              textAlign: "center",
+                              cursor: "pointer",
+                              opacity: estado === "Reservado" ? 0.8 : 1,
+                            }}
+                            onClick={() => handleCellClick(turno, hora, estacion)}
+                          >
+                            {estado}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
+          </div>
 
-          </div>  
-
-
-          {/* Modal contextual */}
-          {mostrarModal && turnoSeleccionado && (
-            <div
-              ref={modalRef}
-              className="modal-contextual"
-              style={{ top: posicionModal.top, left: posicionModal.left }}
-            >
-              <h2>Detalle del Turno</h2>
-              <p><strong>Estado:</strong> {turnoSeleccionado.estado}</p>
-              <p><strong>Fecha:</strong> {formatDateForSummary(turnoSeleccionado.fecha)}</p>
-              <p><strong>Hora:</strong> {turnoSeleccionado.hora}</p>                
-              <p><strong>Cliente:</strong> {turnoSeleccionado.cliente}</p>
-              <p><strong>Modelo:</strong> {turnoSeleccionado.modelo}</p>
-              <p><strong>Patente:</strong> {turnoSeleccionado.patente}</p>
-              <p><strong>Servicio:</strong> {turnoSeleccionado.servicio}</p>              
-
-
-              <div className="modal-buttons">
-                <button className="modalcancel-btn" onClick={handleCancelar}>Cancelar turno</button>
-                <button className="modalsave-btn" onClick={handleModificar}>Modificar turno</button>
-              </div>
-            </div>
+          {/* Modal del detalle  */}
           
-          )}
+          <TurnoPopup
+            isOpen={isModalOpen}
+            turno={turnoSeleccionado}
+            onClose={cerrarModal}
+            onModificar={handleModificar}
+            onCancelar={handleCancelar}
+          />
         </main>
       </div>
       <Footer />

@@ -1,72 +1,111 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Sidebar from "../components/Sidebar";
-import { FaCalendarAlt, FaTools, FaClock, FaCar, FaDollarSign, FaWrench } from "react-icons/fa";
+import { FaCalendarAlt, FaCheckCircle, FaClock, FaCar, FaDollarSign, FaTools } from "react-icons/fa";
 import { useTurnos } from "../context/TurnosContext";
+import { getOrdenes } from "../services/ordenesService";
+import "../styles/Dashboard.css";
 
-import "./Dashboard.css";
-
-function Dashboard() {
+export default function Dashboard() {
   const { turnos } = useTurnos();
-  const hoy = new Date().toISOString().slice(0, 10); // fecha actual YYYY-MM-DD
+  const [ordenes, setOrdenes] = useState([]);
 
-  // Estadísticas dinámicas
-  const turnosPendientes = turnos.filter(
-    t => t.estadoOrden === "PENDIENTE" && t.fecha === hoy
-  ).length;
+  const [turnosReservadosHoy, setTurnosReservadosHoy] = useState(0);
+  const [turnosDisponiblesHoy, setTurnosDisponiblesHoy] = useState(0);
+  const [vehiculosTallerHoy, setVehiculosTallerHoy] = useState(0);
+  const [serviciosFinalizadosHoy, setServiciosFinalizadosHoy] = useState(0);
+  const [pagosHoy, setPagosHoy] = useState(0);
+  const [serviciosEnCursoHoy, setServiciosEnCursoHoy] = useState(0);
 
-  const serviciosRealizados = turnos.filter(t => t.servicioRealizado === true).length;
+  useEffect(() => {
+    const fetchOrdenes = async () => {
+      const data = await getOrdenes() || [];
+      setOrdenes(data);
 
-  const serviciosDemorados = turnos.filter(
-    t => t.estadoOrden === "PENDIENTE" && new Date(t.hora) < new Date()
-  ).length;
+      const hoy = new Date();
+      const hoyStr = hoy.toDateString();
 
-  const vehiculosTaller = turnos.filter(t => t.estadoOrden === "EN CURSO").length;
+      // Turnos reservados del día
+      const reservados = turnos.filter(t => {
+        const fecha = new Date(t.fecha);
+        return fecha.toDateString() === hoyStr && t.estado === "RESERVADO";
+      });
+      setTurnosReservadosHoy(reservados.length);
 
-  const facturacionDia = turnos
-    .filter(t => t.estadoOrden === "FINALIZADO" && t.fecha === hoy)
-    .reduce((sum, t) => sum + (t.pago || 0), 0);
+      // Turnos disponibles del día
+      const disponibles = turnos.filter(t => {
+        const fecha = new Date(t.fecha);
+        return fecha.toDateString() === hoyStr && !t.cliente;
+      });
+      setTurnosDisponiblesHoy(disponibles.length);
 
-  const serviciosEnCurso = turnos.filter(t => t.estadoOrden === "EN CURSO").length;
+      // Vehículos en taller (pendientes o en curso)
+      const enTaller = data.filter(o => {
+        const fecha = new Date(o.fechaIngreso);
+        return fecha.toDateString() === hoyStr && ["PENDIENTE","EN CURSO"].includes(o.estado);
+      });
+      setVehiculosTallerHoy(enTaller.length);
+
+      // Servicios finalizados hoy
+      const finalizados = data.filter(o => {
+        if (!o.fechaFinalizado) return false;
+        const fecha = new Date(o.fechaFinalizado);
+        return fecha.toDateString() === hoyStr && o.estado === "FINALIZADO";
+      });
+      setServiciosFinalizadosHoy(finalizados.length);
+
+      // Pagos / facturación del día (sumamos totales de órdenes finalizadas)
+      const pagos = finalizados.reduce((acc, o) => acc + (o.total || 0), 0);
+      setPagosHoy(pagos);
+
+      // Servicios en curso hoy
+      const enCurso = data.filter(o => {
+        const fecha = new Date(o.fechaIngreso);
+        return fecha.toDateString() === hoyStr && o.estado === "EN CURSO";
+      });
+      setServiciosEnCursoHoy(enCurso.length);
+    };
+
+    fetchOrdenes();
+  }, [turnos]);
 
   return (
     <div className="dashboard-container">
       <Header username="Admin" />
-
       <div className="dashboard-content">
         <Sidebar />
         <main className="main-content">
           <div className="cards-container">
             <div className="card">
-              <h3>Turnos pendientes del día</h3>
+              <h3>Turnos reservados hoy</h3>
               <FaCalendarAlt className="card-icon" />
-              <p>{turnosPendientes}</p>
+              <p className="card-number">{turnosReservadosHoy}</p>
             </div>
             <div className="card">
-              <h3>Servicios realizados</h3>
-              <FaTools className="card-icon" />
-              <p>{serviciosRealizados}</p>
+              <h3>Turnos disponibles hoy</h3>
+              <FaCheckCircle className="card-icon" />
+              <p className="card-number">{turnosDisponiblesHoy}</p>
             </div>
             <div className="card">
-              <h3>Servicios con demoras</h3>
-              <FaClock className="card-icon" />
-              <p>{serviciosDemorados}</p>
-            </div>
-            <div className="card">
-              <h3>Vehículos en el taller</h3>
+              <h3>Vehículos en taller</h3>
               <FaCar className="card-icon" />
-              <p>{vehiculosTaller}</p>
+              <p className="card-number">{vehiculosTallerHoy}</p>
             </div>
             <div className="card">
-              <h3>Pagos / Facturación del día</h3>
+              <h3>Servicios finalizados</h3>
+              <FaTools className="card-icon" />
+              <p className="card-number">{serviciosFinalizadosHoy}</p>
+            </div>
+            <div className="card">
+              <h3>Pagos / Facturación hoy</h3>
               <FaDollarSign className="card-icon" />
-              <p>${facturacionDia}</p>
+              <p className="card-number">${pagosHoy.toLocaleString("es-AR")}</p>
             </div>
             <div className="card">
               <h3>Servicios en curso</h3>
-              <FaWrench className="card-icon" />
-              <p>{serviciosEnCurso}</p>
+              <FaClock className="card-icon" />
+              <p className="card-number">{serviciosEnCursoHoy}</p>
             </div>
           </div>
         </main>
@@ -75,8 +114,6 @@ function Dashboard() {
     </div>
   );
 }
-
-export default Dashboard;
 
 
 

@@ -1,0 +1,326 @@
+.taller-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: #1f1f1f;
+  color: #fff;
+}
+
+.taller-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 20px;
+}
+
+.taller-title {
+  font-size: 2rem;
+  margin-bottom: 40px;
+  text-align: center;
+  color: #ffde59;
+  margin-top: 0;
+}
+
+/* --- RECTÁNGULOS --- */
+.orden-card {
+  background-color: #2b2b2b;
+  border-radius: 12px;
+  padding: 20px;
+  width: 80%;
+  margin-bottom: 10px;
+  display: flex;
+  gap: 20px;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+}
+
+/* Columnas dentro de Rectángulo 1 y 3 */
+.columna, .columna-servicios {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* RECTÁNGULO 2 - Estados */
+.estado-orden {
+  justify-content: space-around;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.estado-boton {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  border: 2px solid;
+  border-radius: 6px;
+  padding: 5px 40px;
+  cursor: pointer;
+  font-weight: bold;  
+}
+
+.estado-boton.activo {
+  box-shadow: 0 0 10px rgba(255, 222, 89, 0.7);
+}
+
+.circulo-estado {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+/* --- FILA SUPERIOR: SERVICIO PRINCIPAL + SERVICIOS ADICIONALES --- */
+.fila-superior {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.servicio-principal-container,
+.servicios-adicionales-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.servicio-principal-fila,
+.servicios-adicionales-fila {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+
+.servicio-principal-fila button,
+.servicios-adicionales-fila button {
+  padding: 5px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  background-color: #444;
+  color: #fff;
+  font-weight: bold;
+}
+
+.servicio-principal-label-fila {
+  display: flex;
+  align-items: center;
+  gap: 10px; 
+}
+
+.servicio-principal-fila button.activo {
+  background-color: #4caf50;
+  color: #fff;
+}
+
+/* Lista de servicios adicionales */
+.lista-servicios-adicionales {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-height: 40px;
+}
+
+.item-servicio {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 10px;
+  background-color: #3b3b3b;
+  border-radius: 6px;
+}
+
+.item-servicio.vacio {
+  font-style: italic;
+  color: #aaa;
+}
+
+/* FILA OTROS */
+.fila-otros {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.fila-otros textarea {
+  width: 100%;
+  min-height: 80px;
+  resize: vertical;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #555;
+  background-color: #1f1f1f;
+  color: #fff;
+}
+
+/* FILA PUNTOS DE CONTROL */
+.fila-puntos-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.fila-puntos-control button {
+  padding: 5px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  background-color: #444;
+  color: #fff;
+  font-weight: bold;
+}
+
+.fila-secundaria {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.fila-otros-container,
+.lista-servicios-adicionales-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.servicio-principal-label-fila button {
+  padding: 5px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  background-color: #444;
+  color: #fff;
+  font-weight: bold;
+}
+
+.servicio-principal-fila button.activo-ok {
+  background-color: #4caf50; /* verde */
+  
+}
+
+.servicio-principal-fila button.activo-no {
+  background-color: #f44336; /* rojo */
+}
+
+.servicio-principal-fila button:hover {
+  opacity: 0.8;
+}
+
+.fila-puntos-control button.activo-ok {
+  background-color: #4caf50; /* verde */
+  color: white;
+}
+
+.fila-puntos-control button.activo-no {
+  background-color: #f44336; /* rojo */
+  color: white;
+}
+
+.fila-puntos-control button:hover {
+  opacity: 0.8;
+}
+
+
+/* BOTONES DE ACCIÓN */
+.accion-botones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 30px;
+  margin-top: 20px;
+  width: 80%;           
+  padding-right: 0;
+}
+
+.volver-btn, .cerrar-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.volver-btn {
+  background-color: #ccc;
+}
+
+.cerrar-btn {
+  background-color: #4caf50;
+  color: #fff;
+}
+
+.cerrar-btn:hover {
+  background-color: #1f5a20;
+}
+
+.volver-btn:hover {
+  background-color: #565555;
+}
+.orden-card.servicios {
+  display: flex;
+  flex-direction: column; 
+  gap: 0px; 
+}
+
+.link-puntos-control:hover {
+  text-decoration: underline;
+  color: #2d89ef;
+}
+
+
+/* === Modal exclusivo de OrdenTaller === */
+.orden-taller-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.orden-taller-modal {
+  background: #fff;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+  text-align: center;
+  max-width: 350px;
+  width: 90%;
+  animation: modalFadeIn 0.3s ease;
+}
+
+.orden-taller-modal h2 {
+  color: #d9534f;
+  margin-bottom: 1rem;
+}
+
+.orden-taller-modal p {
+  font-size: 1rem;
+  color: #333;
+}
+
+.orden-taller-modal button {
+  background: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  margin-top: 1rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.orden-taller-modal button:hover {
+  background: #0056b3;
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
